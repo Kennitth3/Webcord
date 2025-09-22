@@ -306,7 +306,7 @@ function sendMessage() {
   const msgRef = push(ref(db, `servers/${currentServer}/channels/${currentChannel}/messages`));
 
   if (file) {
-    if (file.size > 500000) { alert("File too large! Max 500KB"); return; }
+    if (file.size > 5000000) { alert("File too large! Max 500MB, WHY IS UR IMAGE THAT BIG BRO 😭"); return; }
     const reader = new FileReader();
     reader.onload = (e) => {
       set(msgRef, {
