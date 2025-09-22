@@ -72,7 +72,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getDatabase, ref, set, get, push, onChildAdded, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCSou4NAkrr9TQcDPlxddfl8JAUI-DueaI",
   authDomain: "webcord-a1c2e.firebaseapp.com",
@@ -95,22 +94,28 @@ let currentChannel=null;
 onAuthStateChanged(auth, async (user)=>{
 currentUser=user;
 if(user){
-  const snap=await get(ref(db,'users/'+user.uid));
-  userProfile=snap.exists()?snap.val():null;
-  document.getElementById("authBox").style.display="none";
-  document.getElementById("userPanel").style.display="flex";
-  document.getElementById("userAvatar").src=userProfile?.avatar||`https://i.pravatar.cc/150?u=${user.uid}`;
-  document.getElementById("userName").innerText=userProfile?.username||user.email;
-  document.getElementById("userAbout").innerText=userProfile?.about||"";
-  loadServers();
+    const snap = await get(ref(db,'users/'+user.uid));
+    userProfile = snap.exists() ? snap.val() : null;
+
+    if(user.email === "vegakennitth@gmail.com"){
+      userProfile.role = "owner";
+    }
+
+    document.getElementById("authBox").style.display="none";
+    document.getElementById("userPanel").style.display="flex";
+    document.getElementById("userAvatar").src = userProfile.avatar || `https://i.pravatar.cc/150?u=${user.uid}`;
+    document.getElementById("userName").innerText = userProfile.username || user.email;
+    document.getElementById("userName").style.color = (userProfile.role === "owner") ? "red" : "white";
+    document.getElementById("userAbout").innerText = userProfile.about || "";
+    loadServers();
 }else{
-  document.getElementById("authBox").style.display="flex";
-  document.getElementById("userPanel").style.display="none";
-  currentServer=null; currentChannel=null;
-  document.getElementById("serverList").innerHTML="";
-  document.getElementById("channelList").innerHTML="";
-  document.getElementById("messages").innerHTML="";
-  document.getElementById("chatHeader").innerText="Welcome to WebCord";
+    document.getElementById("authBox").style.display="flex";
+    document.getElementById("userPanel").style.display="none";
+    currentServer=null; currentChannel=null;
+    document.getElementById("serverList").innerHTML="";
+    document.getElementById("channelList").innerHTML="";
+    document.getElementById("messages").innerHTML="";
+    document.getElementById("chatHeader").innerText="Welcome to WebCord";
 }
 });
 
@@ -140,12 +145,14 @@ await update(ref(db,'users/'+currentUser.uid),{username:newName,about:newAbout})
 userProfile.username=newName; userProfile.about=newAbout;
 document.getElementById("userName").innerText=newName;
 document.getElementById("userAbout").innerText=newAbout;
+document.getElementById("userName").style.color = (userProfile.role === "owner") ? "red" : "white";
 }
 
 async function changePFP(){
 const input=document.createElement('input'); input.type='file'; input.accept='image/png';
 input.onchange=async e=>{
   const file=e.target.files[0]; if(!file) return;
+  if(file.size>500000){alert("File too large! Max 500KB"); return;}
   const reader=new FileReader();
   reader.onload=async ev=>{
     const base64=ev.target.result;
@@ -166,21 +173,14 @@ async function loadServers(){
   displayedServers.clear();
   const serversRef = ref(db,'servers');
 
-  // Load existing servers
   try{
     const snap = await get(serversRef);
     if(snap.exists()){
       Object.entries(snap.val()).forEach(([id,data])=>{
         addServerToDOM(id,data);
       });
-    } else if(currentUser){
-      const defaultRef = push(serversRef);
-      const serverData = { name: "Welcome Server", owner: currentUser.uid, members: {[currentUser.uid]:true}, channels:{} };
-      await set(defaultRef, serverData);
-      addServerToDOM(defaultRef.key, serverData);
     }
   } catch(err){console.error(err);}
-
   onChildAdded(serversRef, snap=>{
     addServerToDOM(snap.key,snap.val());
   });
@@ -214,6 +214,7 @@ function joinServer(serverId,serverName){
   currentServer = serverId;
   document.getElementById("chatHeader").innerText=`Server: ${serverName}`;
   document.getElementById("messages").innerHTML="";
+  displayedMessages.clear();
   loadChannels();
 }
 
@@ -239,26 +240,27 @@ function loadChannels(){
 function addChannelToDOM(id,data){
   if(displayedChannels.has(id)) return;
   displayedChannels.add(id);
+  const channelList = document.getElementById("channelList");
   const div = document.createElement("div");
   div.className = "channel";
   div.innerText = data.name || "Unnamed Channel";
-  div.style.cursor = "pointer";
-  div.onclick = ()=>selectChannel(id,data.name);
-  document.getElementById("channelList").appendChild(div);
+  div.onclick = ()=>joinChannel(id,data.name);
+  channelList.appendChild(div);
 }
 
 async function createChannel(){
-  if(!currentServer) return;
-  const name=prompt("Channel name?"); if(!name) return;
-  const channelRef = push(ref(db,`servers/${currentServer}/channels`));
+  if(!currentUser || !currentServer) return;
+  const name = prompt("Channel name?"); if(!name) return;
+  const channelsRef = ref(db,`servers/${currentServer}/channels`);
+  const channelRef = push(channelsRef);
   await set(channelRef,{name});
+  addChannelToDOM(channelRef.key,{name});
 }
 
-// ---------- Messages ----------
-let displayedMessages = new Set();
-function selectChannel(channelId,name){
-  currentChannel=channelId;
-  document.getElementById("chatHeader").innerText="Channel: "+name;
+// ---------- Messaging ----------
+const displayedMessages = new Set();
+function joinChannel(channelId,channelName){
+  currentChannel = channelId;
   document.getElementById("messages").innerHTML="";
   displayedMessages.clear();
   loadMessages();
@@ -267,7 +269,6 @@ function selectChannel(channelId,name){
 function loadMessages(){
   if(!currentServer || !currentChannel) return;
   const messagesRef = ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`);
-
   get(messagesRef).then(snap=>{
     if(snap.exists()){
       Object.entries(snap.val()).forEach(([id,msg])=>{
@@ -275,8 +276,7 @@ function loadMessages(){
       });
     }
   });
-
-  onChildAdded(messagesRef, snap=>{
+  onChildAdded(messagesRef,(snap)=>{
     addMessageToDOM(snap.key,snap.val());
   });
 }
@@ -284,64 +284,67 @@ function loadMessages(){
 function addMessageToDOM(id,msg){
   if(displayedMessages.has(id)) return;
   displayedMessages.add(id);
-  const div=document.createElement("div"); div.className="message";
-  div.innerHTML=`<img class="avatar" src="${msg.avatar||'https://i.pravatar.cc/32'}"><div><div class="user">${msg.username||msg.uid}</div><div class="about">${msg.text||''}</div>${msg.image?`<img class="msgImg" src="${msg.image}">`:''}</div>`;
-  const messagesEl=document.getElementById("messages");
+  const div = document.createElement("div");
+  div.className = "message";
+
+  const usernameColor = (msg.email === "vegakennitth@gmail.com" || msg.role === "owner") ? "red" : "#00b0f4";
+
+  div.innerHTML = `
+    <img class="avatar" src="${msg.avatar||'https://i.pravatar.cc/32'}">
+    <div>
+      <div class="user" style="color:${usernameColor}">${msg.username||msg.uid}</div>
+      <div class="about">${msg.text||''}</div>
+      ${msg.image ? `<img class="msgImg" src="${msg.image}">` : ''}
+    </div>`;
+  const messagesEl = document.getElementById("messages");
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// Make sure currentServer, currentChannel, currentUser, and userProfile are all set
-function sendMessage() {
-  if (!currentUser || !currentServer || !currentChannel) {
-    alert("Please select a server and a channel!");
-    return;
-  }
-
-  const text = document.getElementById("msgInput").value.trim();
-  const file = document.getElementById("msgFile").files[0];
-
-  if (!text && !file) return;
-
-  const msgRef = push(ref(db, `servers/${currentServer}/channels/${currentChannel}/messages`));
-
-  if (file) {
-    if (file.size > 5000000) { alert("File too large! Max 500MB, WHY IS UR IMAGE THAT BIG BRO 😭"); return; }
+async function sendMessage(){
+  if(!currentServer || !currentChannel || !currentUser) return;
+  const text = document.getElementById("msgInput").value;
+  const fileInput = document.getElementById("msgFile");
+  let image = "";
+  
+  if(fileInput.files.length>0){
+    const file = fileInput.files[0];
+    if(file.size>5000000){alert("File too large! Max 500MB, WHY IS THE FILE SO BIG BRO 😭"); return;}
     const reader = new FileReader();
-    reader.onload = (e) => {
-      set(msgRef, {
+    reader.onload=async ev=>{
+      image = ev.target.result;
+      await push(ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`),{
         uid: currentUser.uid,
         username: userProfile.username,
         avatar: userProfile.avatar,
-        text: text || "",
-        image: e.target.result,
-        timestamp: Date.now()
-      }).then(() => {
-        document.getElementById("msgInput").value = "";
-        document.getElementById("msgFile").value = "";
-      }).catch(err => console.error("Error sending message:", err));
+        text,
+        image,
+        timestamp: Date.now(),
+        email: currentUser.email,
+        role: userProfile.role || ""
+      });
+      document.getElementById("msgInput").value="";
+      fileInput.value="";
     };
     reader.readAsDataURL(file);
   } else {
-    set(msgRef, {
+    await push(ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`),{
       uid: currentUser.uid,
       username: userProfile.username,
       avatar: userProfile.avatar,
-      text: text,
-      image: "",
-      timestamp: Date.now()
-    }).then(() => {
-      document.getElementById("msgInput").value = "";
-    }).catch(err => console.error("Error sending message:", err));
+      text,
+      image:"",
+      timestamp: Date.now(),
+      email: currentUser.email,
+      role: userProfile.role || ""
+    });
+    document.getElementById("msgInput").value="";
   }
 }
 
-
-// Expose globally
 window.register=register; window.login=login; window.logout=logout;
 window.createServer=createServer; window.createChannel=createChannel;
 window.sendMessage=sendMessage; window.editProfile=editProfile; window.changePFP=changePFP;
-
 </script>
 </body>
 </html>
