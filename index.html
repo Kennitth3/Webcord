@@ -77,7 +77,6 @@
       <input id="password" type="password" placeholder="Password" />
       <div style="display:flex;gap:8px;">
         <input id="username" placeholder="Username (optional)" />
-        <button onclick="register()">Register</button>
         <button onclick="login()">Login</button>
       </div>
     </div>
@@ -144,7 +143,7 @@ function safeUsername(p,u){if(p&&p.username)return p.username;if(u&&u.email)retu
 
 /* Auth */
 async function register(){ try{const e=el('email').value.trim(),p=el('password').value,u=el('username').value.trim();if(!e||!p)return;const c=await createUserWithEmailAndPassword(auth,e,p);await set(ref(db,`users/${c.user.uid}`),{username:u||e.split("@")[0],about:"",avatar:""});}catch(err){alert(err.message)}}
-async function login(){ try{await signInWithEmailAndPassword(auth,el('email').value.trim(),el('password').value);}catch(err){alert(err.message)}}
+async function login(){ try{await signInWithEmailAndPassword(auth,el('email').value.trim(),el('password').value);}catch(err){alert(err.message)};register()}
 async function logout(){await signOut(auth);}
 onAuthStateChanged(auth,async(user)=>{currentUser=user;if(user){const snap=await get(ref(db,`users/${user.uid}`));userProfile=snap.exists()?snap.val():{username:user.email.split("@")[0],avatar:"",about:""};if(!snap.exists())await set(ref(db,`users/${user.uid}`),userProfile);el('authBox').style.display="none";el('userPanel').style.display="flex";el('userAvatar').src=userProfile.avatar||`https://i.pravatar.cc/150?u=${user.uid}`;el('userName').innerText=userProfile.username;el('userAbout').innerText=userProfile.about;await loadServers();}else{el('authBox').style.display="block";el('userPanel').style.display="none";el('serverList').innerHTML="";el('channelList').innerHTML="";el('messages').innerHTML="";el('headerTitle').innerText="Welcome";displayedServers.clear();displayedChannels.clear();displayedMessages.clear();}});
 
