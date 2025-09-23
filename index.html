@@ -1,71 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>WebCord Online</title>
+<meta charset="utf-8" />
+<title>WebCord</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-body{margin:0;display:flex;height:100vh;font-family:sans-serif;background:#2f3136;color:white;}
-#servers{width:80px;background:#202225;display:flex;flex-direction:column;align-items:center;padding:10px;overflow-y:auto;}
-#channels{width:220px;background:#2f3136;padding:10px;overflow-y:auto;}
-#chat{flex:1;display:flex;flex-direction:column;background:#36393f;}
-#chatHeader{padding:10px;background:#2f3136;border-bottom:1px solid #202225;display:flex;align-items:center;}
-#messages{flex:1;overflow-y:auto;padding:10px;}
-#input{display:flex;padding:10px;background:#40444b;}
-#input input[type=text]{flex:1;padding:8px;border:none;border-radius:5px;}
-#input input[type=file]{display:none;}
-#input button{margin-left:5px;padding:8px 12px;border:none;border-radius:5px;background:#5865f2;color:white;cursor:pointer;}
-.server,.channel{padding:8px;margin:4px 0;border-radius:5px;cursor:pointer;background:#36393f;text-align:center;}
-.server:hover,.channel:hover{background:#5865f2;}
-#authBox{padding:10px;background:#2f3136;font-size:12px;display:flex;flex-direction:column;}
-#authBox input{width:100%;margin:2px 0;padding:4px;}
-#authBox button{margin:2px 0;width:100%;padding:4px;}
-.message{margin:6px 0;display:flex;align-items:flex-start;}
-.avatar{width:36px;height:36px;border-radius:50%;margin-right:8px;}
-.user{font-weight:bold;color:#00b0f4;margin-right:6px;}
-.about{font-size:12px;color:#b9bbbe;margin-bottom:2px;}
-#userPanel{display:flex;align-items:center;padding:8px;margin-bottom:8px;background:#2f3136;border-radius:5px;}
-#userPanel img{width:40px;height:40px;border-radius:50%;margin-right:8px;cursor:pointer;}
-#profileBtn{margin-left:auto;padding:4px 8px;background:#5865f2;border:none;border-radius:5px;cursor:pointer;color:white;}
-.message img.msgImg{max-width:200px;max-height:200px;border-radius:5px;margin-top:4px;}
+  :root{ --bg:#2f3136; --panel:#36393f; --muted:#b9bbbe; --accent:#5865f2; }
+  *{box-sizing:border-box}
+  body{margin:0; height:100vh; display:flex; font-family:Inter,system-ui,Arial; background:var(--bg); color:#eaeaea;}
+  /* Servers */
+  #servers { width:84px; padding:12px 8px; background:#202225; display:flex; flex-direction:column; align-items:center; gap:8px; overflow:auto; }
+  .srv-btn { width:56px; height:56px; border-radius:12px; background:var(--panel); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .srv-btn:hover{filter:brightness(1.08)}
+  /* Sidebar */
+  #sidebar { width:280px; padding:12px; background:var(--bg); display:flex; flex-direction:column; gap:12px; }
+  #userPanel { background:var(--panel); padding:10px; border-radius:8px; display:flex; gap:10px; align-items:center; }
+  #userPanel img{width:48px; height:48px; border-radius:8px; cursor:pointer}
+  #userInfo { flex:1; min-width:0; }
+  #userName { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  #userAbout { color:var(--muted); font-size:13px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  #authBox { background:var(--panel); padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:6px; }
+  #authBox input { padding:8px; border-radius:6px; border:none; background:#2b2d30; color:#eaeaea; }
+  #authBox button { padding:8px; border-radius:6px; border:none; background:var(--accent); color:white; cursor:pointer; }
+  #channelsBox { background:var(--panel); padding:8px; border-radius:8px; height:calc(100vh - 220px); overflow:auto; }
+  .channel { padding:8px; border-radius:6px; cursor:pointer; margin-bottom:6px; background:transparent; display:flex; justify-content:space-between; }
+  .channel:hover{background:#3b3d40}
+  #manageRolesBtn{margin-left:6px;padding:6px 8px;border-radius:6px;border:none;background:#e04e4e;color:white;cursor:pointer}
+  /* Chat */
+  #main { flex:1; display:flex; flex-direction:column; }
+  #chatHeader { padding:12px; background:var(--panel); border-bottom:1px solid #232425; display:flex; align-items:center; gap:12px; }
+  #messages { flex:1; padding:12px; overflow:auto; background:linear-gradient(#333,#2f3136); }
+  .message { display:flex; gap:10px; margin-bottom:12px; align-items:flex-start; }
+  .avatar{width:44px;height:44px;border-radius:8px;object-fit:cover;cursor:pointer}
+  .msgBody { background:#2b2d30; padding:8px 10px; border-radius:8px; max-width:70%; }
+  .msgHeader{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .username{ font-weight:700; }
+  .msgText{ color:#e6e6e6; white-space:pre-wrap; word-break:break-word; }
+  .msgImg{ max-width:260px; max-height:260px; display:block; margin-top:8px; border-radius:8px; cursor:pointer }
+  #compose { display:flex; gap:8px; padding:12px; background:var(--panel); align-items:center; }
+  #compose input[type=text]{flex:1;padding:10px;border-radius:8px;border:none;background:#2b2d30;color:#fff}
+  #compose input[type=file]{display:none}
+  #compose button{padding:10px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+  /* Role panel */
+  #rolePanel { position:fixed; right:20px; top:80px; width:320px; background:#111; border:1px solid #333; border-radius:8px; padding:12px; display:none; z-index:30; color:#ddd;}
+  #rolePanel h3{margin:0 0 8px 0}
+  .roleRow{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px; background:#1a1a1a; border-radius:6px; margin-bottom:6px;}
+  .roleRow select{padding:6px;border-radius:6px;border:none;background:#2b2d30;color:#fff}
+  /* Popups */
+  #overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:40;}
+  #popup { background:#222;padding:20px;border-radius:10px;max-width:400px;color:#fff;text-align:center;}
+  #popup img{max-width:100%;border-radius:8px}
+  #popup button{margin-top:12px;padding:6px 12px;border:none;border-radius:6px;background:#5865f2;color:#fff;cursor:pointer}
+  @media (max-width:900px){ #servers{display:none} #sidebar{display:none} }
 </style>
 </head>
 <body>
-<div id="servers">
-<h3>Servers</h3>
-<div id="serverList"></div>
-<button onclick="createServer()">+</button>
-</div>
-<div id="channels">
-<div id="authBox">
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<input id="username" placeholder="Username">
-<button onclick="register()">Register</button>
-<button onclick="login()">Login</button>
-</div>
-<div id="userPanel" style="display:none;">
-<img id="userAvatar" src="" onclick="changePFP()">
-<div>
-<div id="userName"></div>
-<div id="userAbout"></div>
-</div>
-<button id="profileBtn" onclick="editProfile()">Edit</button>
-<button onclick="logout()" style="margin-left:4px;padding:4px 8px;background:#f04747;border:none;border-radius:5px;color:white;cursor:pointer;">Logout</button>
-</div>
-<h3>Channels</h3>
-<div id="channelList"></div>
-<button onclick="createChannel()">+</button>
-</div>
-<div id="chat">
-<div id="chatHeader">Welcome to WebCord</div>
-<div id="messages"></div>
-<div id="input">
-<input type="text" id="msgInput" placeholder="Type a message...">
-<input type="file" id="msgFile" accept="image/png">
-<button onclick="document.getElementById('msgFile').click()">📎</button>
-<button onclick="sendMessage()">Send</button>
-</div>
-</div>
+  <!-- Servers -->
+  <div id="servers">
+    <div title="Create server" class="srv-btn" onclick="createServer()">＋</div>
+    <div id="serverList" style="width:100%"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="userPanel" style="display:none">
+      <img id="userAvatar" alt="avatar" onclick="changePFP()" />
+      <div id="userInfo">
+        <div id="userName"></div>
+        <div id="userAbout"></div>
+      </div>
+      <button id="manageRolesBtn" style="display:none" onclick="openRolePanel()">Manage Roles</button>
+    </div>
+    <div id="authBox">
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <div style="display:flex;gap:8px;">
+        <input id="username" placeholder="Username (optional)" />
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+    <div style="height:8px"></div>
+    <div id="channelsBox">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>Channels</strong>
+        <button onclick="createChannel()" style="background:#2b2d30;border:none;padding:6px;border-radius:6px;color:#fff">＋</button>
+      </div>
+      <div id="channelList"></div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="main">
+    <div id="chatHeader"><strong id="headerTitle">Welcome</strong></div>
+    <div id="messages"></div>
+    <div id="compose">
+      <input type="text" id="msgInput" placeholder="Type a message...">
+      <input type="file" id="msgFile" accept="image/png">
+      <button onclick="document.getElementById('msgFile').click()">📎</button>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <!-- Role panel -->
+  <div id="rolePanel">
+    <h3>Manage Roles</h3>
+    <div id="roleUserList"></div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button onclick="closeRolePanel()">Close</button>
+    </div>
+  </div>
+
+  <!-- Overlay popup -->
+  <div id="overlay"><div id="popup"></div></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -85,266 +132,62 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-let currentUser=null;
-let userProfile=null;
-let currentServer=null;
-let currentChannel=null;
+let currentUser=null, userProfile=null, currentServer=null, currentChannel=null, currentRole="member";
+const displayedServers=new Set(),displayedChannels=new Set(),displayedMessages=new Set();
 
-// ---------- Auth ----------
-onAuthStateChanged(auth, async (user)=>{
-currentUser=user;
-if(user){
-    const snap = await get(ref(db,'users/'+user.uid));
-    userProfile = snap.exists() ? snap.val() : null;
+function el(id){return document.getElementById(id);}
+function roleColor(r){ return r==="owner"?"red":r==="moderator"?"#2b8cff":"#9aa0a6";}
+function safeUsername(p,u){if(p&&p.username)return p.username;if(u&&u.email)return u.email.split("@")[0];return "unknown";}
 
-    if(user.email === "vegakennitth@gmail.com"){
-      userProfile.role = "owner";
-    }
-
-    document.getElementById("authBox").style.display="none";
-    document.getElementById("userPanel").style.display="flex";
-    document.getElementById("userAvatar").src = userProfile.avatar || `https://i.pravatar.cc/150?u=${user.uid}`;
-    document.getElementById("userName").innerText = userProfile.username || user.email;
-    document.getElementById("userName").style.color = (userProfile.role === "owner") ? "red" : "white";
-    document.getElementById("userAbout").innerText = userProfile.about || "";
-    loadServers();
-}else{
-    document.getElementById("authBox").style.display="flex";
-    document.getElementById("userPanel").style.display="none";
-    currentServer=null; currentChannel=null;
-    document.getElementById("serverList").innerHTML="";
-    document.getElementById("channelList").innerHTML="";
-    document.getElementById("messages").innerHTML="";
-    document.getElementById("chatHeader").innerText="Welcome to WebCord";
-}
-});
-
-// ---------- Auth Functions ----------
-async function register(){
-const email=document.getElementById("email").value;
-const pass=document.getElementById("password").value;
-const username=document.getElementById("username").value||email.split("@")[0];
-const cred=await createUserWithEmailAndPassword(auth,email,pass);
-await set(ref(db,'users/'+cred.user.uid),{username,avatar:'https://i.pravatar.cc/150?u='+cred.user.uid,about:""});
-}
-
-async function login(){
-const email=document.getElementById("email").value;
-const pass=document.getElementById("password").value;
-await signInWithEmailAndPassword(auth,email,pass);
-}
-
+/* Auth */
+async function register(){ try{const e=el('email').value.trim(),p=el('password').value,u=el('username').value.trim();if(!e||!p)return;const c=await createUserWithEmailAndPassword(auth,e,p);await set(ref(db,`users/${c.user.uid}`),{username:u||e.split("@")[0],about:"",avatar:""});}catch(err){alert(err.message)}}
+async function login(){ try{await signInWithEmailAndPassword(auth,el('email').value.trim(),el('password').value);}catch(err){alert(err.message)}}
 async function logout(){await signOut(auth);}
+onAuthStateChanged(auth,async(user)=>{currentUser=user;if(user){const snap=await get(ref(db,`users/${user.uid}`));userProfile=snap.exists()?snap.val():{username:user.email.split("@")[0],avatar:"",about:""};if(!snap.exists())await set(ref(db,`users/${user.uid}`),userProfile);el('authBox').style.display="none";el('userPanel').style.display="flex";el('userAvatar').src=userProfile.avatar||`https://i.pravatar.cc/150?u=${user.uid}`;el('userName').innerText=userProfile.username;el('userAbout').innerText=userProfile.about;await loadServers();}else{el('authBox').style.display="block";el('userPanel').style.display="none";el('serverList').innerHTML="";el('channelList').innerHTML="";el('messages').innerHTML="";el('headerTitle').innerText="Welcome";displayedServers.clear();displayedChannels.clear();displayedMessages.clear();}});
 
-// ---------- Profile ----------
-async function editProfile(){
-const newName=prompt("Username:",userProfile.username);
-const newAbout=prompt("About me:",userProfile.about||"");
-if(!newName) return;
-await update(ref(db,'users/'+currentUser.uid),{username:newName,about:newAbout});
-userProfile.username=newName; userProfile.about=newAbout;
-document.getElementById("userName").innerText=newName;
-document.getElementById("userAbout").innerText=newAbout;
-document.getElementById("userName").style.color = (userProfile.role === "owner") ? "red" : "white";
-}
+/* Servers */
+async function loadServers(){displayedServers.clear();el('serverList').innerHTML="";const sref=ref(db,'servers');const snap=await get(sref);if(snap.exists()){Object.entries(snap.val()).forEach(([id,d])=>addServerToDOM(id,d));}onChildAdded(sref,s=>addServerToDOM(s.key,s.val()));}
+function addServerToDOM(id,d){if(displayedServers.has(id))return;displayedServers.add(id);const div=document.createElement("div");div.className="srv-btn";div.title=d.name;div.innerText=(d.name||"S").slice(0,2).toUpperCase();div.onclick=()=>joinServer(id,d.name);el('serverList').appendChild(div);}
+async function createServer(){if(!currentUser)return;const n=prompt("Server name?");if(!n)return;const sref=push(ref(db,'servers'));const data={name:n,owner:currentUser.uid,members:{[currentUser.uid]:true},roles:{[currentUser.uid]:"owner"},channels:{}};await set(sref,data);addServerToDOM(sref.key,data);}
+async function joinServer(id,name){currentServer=id;currentChannel=null;el('channelList').innerHTML="";el('messages').innerHTML="";el('headerTitle').innerText=name;await set(ref(db,`servers/${id}/members/${currentUser.uid}`),true);const rs=await get(ref(db,`servers/${id}/roles/${currentUser.uid}`));if(rs.exists())currentRole=rs.val();else if(currentUser.email==="vegakennitth@gmail.com"){currentRole="owner";await set(ref(db,`servers/${id}/roles/${currentUser.uid}`),"owner");}else currentRole="member";el('manageRolesBtn').style.display=currentRole==="owner"?"block":"none";await loadChannels();}
 
-async function changePFP(){
-const input=document.createElement('input'); input.type='file'; input.accept='image/png';
-input.onchange=async e=>{
-  const file=e.target.files[0]; if(!file) return;
-  if(file.size>500000){alert("File too large! Max 500KB"); return;}
-  const reader=new FileReader();
-  reader.onload=async ev=>{
-    const base64=ev.target.result;
-    await update(ref(db,'users/'+currentUser.uid),{avatar:base64});
-    userProfile.avatar=base64;
-    document.getElementById("userAvatar").src=base64;
-  };
-  reader.readAsDataURL(file);
-};
-input.click();
-}
+/* Channels */
+async function loadChannels(){displayedChannels.clear();el('channelList').innerHTML="";if(!currentServer)return;const cref=ref(db,`servers/${currentServer}/channels`);const snap=await get(cref);if(snap.exists())Object.entries(snap.val()).forEach(([id,d])=>addChannelToDOM(id,d));onChildAdded(cref,s=>addChannelToDOM(s.key,s.val()));}
+function addChannelToDOM(id,d){if(displayedChannels.has(id))return;displayedChannels.add(id);const r=document.createElement("div");r.className="channel";r.innerText=d.name;r.onclick=()=>joinChannel(id,d.name);el('channelList').appendChild(r);}
+async function createChannel(){if(!currentServer)return;const n=prompt("Channel name?");if(!n)return;const cref=push(ref(db,`servers/${currentServer}/channels`));await set(cref,{name:n});}
 
-// ---------- Servers ----------
-const displayedServers = new Set();
-async function loadServers(){
-  const serverList = document.getElementById("serverList");
-  serverList.innerHTML = "";
-  displayedServers.clear();
-  const serversRef = ref(db,'servers');
+/* Messages */
+async function joinChannel(id,n){currentChannel=id;el('messages').innerHTML="";displayedMessages.clear();el('headerTitle').innerText=n;await loadMessages();}
+async function loadMessages(){if(!currentServer||!currentChannel)return;const mref=ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`);const snap=await get(mref);if(snap.exists())Object.entries(snap.val()).forEach(([id,m])=>addMessageToDOM(id,m));onChildAdded(mref,s=>addMessageToDOM(s.key,s.val()));}
+function addMessageToDOM(id,m){if(displayedMessages.has(id))return;displayedMessages.add(id);const c=document.createElement("div");c.className="message";const a=document.createElement("img");a.className="avatar";a.src=m.avatar||`https://i.pravatar.cc/150?u=${m.uid}`;a.onclick=()=>showProfile(m.uid);const b=document.createElement("div");b.className="msgBody";const h=document.createElement("div");h.className="msgHeader";const n=document.createElement("div");n.className="username";n.style.color=roleColor(m.role);n.innerText=m.username;const t=document.createElement("div");t.style.fontSize="12px";t.style.color="#9aa0a6";t.innerText=m.timestamp?new Date(m.timestamp).toLocaleTimeString():"";h.appendChild(n);h.appendChild(t);const txt=document.createElement("div");txt.className="msgText";txt.innerText=m.text;b.appendChild(h);b.appendChild(txt);if(m.image){const img=document.createElement("img");img.className="msgImg";img.src=m.image;img.onclick=()=>showImage(m.image);b.appendChild(img);}c.appendChild(a);c.appendChild(b);el('messages').appendChild(c);el('messages').scrollTop=el('messages').scrollHeight;}
+async function sendMessage(){if(!currentUser||!currentServer||!currentChannel)return;const text=el('msgInput').value.trim(),f=el('msgFile');if(!text&&!f.files.length)return;if(!userProfile)userProfile={username:safeUsername(null,currentUser),avatar:""};const r=await get(ref(db,`servers/${currentServer}/roles/${currentUser.uid}`));if(r.exists())currentRole=r.val();const pref=push(ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`));if(f.files.length){const file=f.files[0];const reader=new FileReader();reader.onload=async e=>{await set(pref,{uid:currentUser.uid,username:userProfile.username,avatar:userProfile.avatar||`https://i.pravatar.cc/150?u=${currentUser.uid}`,text,image:e.target.result,timestamp:Date.now(),role:currentRole});el('msgInput').value="";f.value="";};reader.readAsDataURL(file);}else{await set(pref,{uid:currentUser.uid,username:userProfile.username,avatar:userProfile.avatar||`https://i.pravatar.cc/150?u=${currentUser.uid}`,text,image:"",timestamp:Date.now(),role:currentRole});el('msgInput').value="";}}
 
-  try{
-    const snap = await get(serversRef);
-    if(snap.exists()){
-      Object.entries(snap.val()).forEach(([id,data])=>{
-        addServerToDOM(id,data);
-      });
-    }
-  } catch(err){console.error(err);}
-  onChildAdded(serversRef, snap=>{
-    addServerToDOM(snap.key,snap.val());
-  });
-}
+/* Profile */
+async function editProfile(){if(!currentUser)return;const n=prompt("Username:",userProfile.username||"");const a=prompt("About me:",userProfile.about||"");if(n===null||a===null)return;userProfile.username=n;userProfile.about=a;await update(ref(db,`users/${currentUser.uid}`),userProfile);el('userName').innerText=n;el('userAbout').innerText=a;}
+function changePFP(){if(!currentUser)return;const inp=document.createElement("input");inp.type="file";inp.accept="image/png";inp.onchange=e=>{const file=e.target.files[0];const reader=new FileReader();reader.onload=async ev=>{userProfile.avatar=ev.target.result;el('userAvatar').src=ev.target.result;await update(ref(db,`users/${currentUser.uid}`),userProfile);};reader.readAsDataURL(file);};inp.click();}
+async function showProfile(uid){const snap=await get(ref(db,`users/${uid}`));if(!snap.exists())return;const p=snap.val();el('popup').innerHTML=`<h3>${p.username||"Unknown"}</h3><p>${p.about||""}</p><img src="${p.avatar||`https://i.pravatar.cc/150?u=${uid}`}" style="max-width:100px"><br><button onclick="closePopup()">Close</button>`;el('overlay').style.display="flex";}
+function showImage(src){el('popup').innerHTML=`<img src="${src}"><br><button onclick="closePopup()">Close</button>`;el('overlay').style.display="flex";}
+function closePopup(){el('overlay').style.display="none";}
 
-function addServerToDOM(id,data){
-  if(displayedServers.has(id)) return;
-  displayedServers.add(id);
-  const serverList = document.getElementById("serverList");
-  const div = document.createElement("div");
-  div.className = "server";
-  div.innerText = data.name || "Unnamed Server";
-  div.style.cursor="pointer";
-  div.onclick = ()=>joinServer(id,data.name);
-  serverList.appendChild(div);
-}
+/* Role panel */
+async function openRolePanel(){if(currentRole!=="owner"||!currentServer)return;const snap=await get(ref(db,`servers/${currentServer}/roles`));const uSnap=await get(ref(db,`servers/${currentServer}/members`));el('roleUserList').innerHTML="";if(snap.exists()&&uSnap.exists()){for(const [uid,_] of Object.entries(uSnap.val())){let role=snap.val()[uid]||"member";const usnap=await get(ref(db,`users/${uid}`));let name=uid;if(usnap.exists())name=usnap.val().username;const row=document.createElement("div");row.className="roleRow";row.innerHTML=`<span>${name}</span>`;const sel=document.createElement("select");["owner","moderator","member"].forEach(r=>{const opt=document.createElement("option");opt.value=r;opt.innerText=r;if(r===role)opt.selected=true;sel.appendChild(opt);});sel.onchange=()=>update(ref(db,`servers/${currentServer}/roles`),{[uid]:sel.value});row.appendChild(sel);el('roleUserList').appendChild(row);}}el('rolePanel').style.display="block";}
+function closeRolePanel(){el('rolePanel').style.display="none";}
 
-async function createServer(){
-  if(!currentUser) return;
-  const name = prompt("Server name?"); if(!name) return;
-  const serversRef = ref(db,'servers');
-  const serverRef = push(serversRef);
-  const serverData = { name, owner: currentUser.uid, members:{[currentUser.uid]:true}, channels:{} };
-  await set(serverRef, serverData);
-  addServerToDOM(serverRef.key, serverData);
-}
+/* Expose */
+window.register = register;
+window.login = login;
+window.logout = logout;
+window.createServer = createServer;
+window.createChannel = createChannel;
+window.joinChannel = joinChannel;
+window.sendMessage = sendMessage;
+window.editProfile = editProfile;
+window.changePFP = changePFP;
+window.openRolePanel = openRolePanel;
+window.closeRolePanel = closeRolePanel;
+window.joinServer = joinServer;
+window.closePopup = closePopup;
 
-// ---------- Channels ----------
-let displayedChannels = new Set();
-function joinServer(serverId,serverName){
-  currentServer = serverId;
-  document.getElementById("chatHeader").innerText=`Server: ${serverName}`;
-  document.getElementById("messages").innerHTML="";
-  displayedMessages.clear();
-  loadChannels();
-}
-
-function loadChannels(){
-  const channelList = document.getElementById("channelList");
-  channelList.innerHTML="";
-  displayedChannels.clear();
-  const channelsRef = ref(db,`servers/${currentServer}/channels`);
-
-  get(channelsRef).then(snap=>{
-    if(snap.exists()){
-      Object.entries(snap.val()).forEach(([id,data])=>{
-        addChannelToDOM(id,data);
-      });
-    }
-  });
-
-  onChildAdded(channelsRef,(snap)=>{
-    addChannelToDOM(snap.key,snap.val());
-  });
-}
-
-function addChannelToDOM(id,data){
-  if(displayedChannels.has(id)) return;
-  displayedChannels.add(id);
-  const channelList = document.getElementById("channelList");
-  const div = document.createElement("div");
-  div.className = "channel";
-  div.innerText = data.name || "Unnamed Channel";
-  div.onclick = ()=>joinChannel(id,data.name);
-  channelList.appendChild(div);
-}
-
-async function createChannel(){
-  if(!currentUser || !currentServer) return;
-  const name = prompt("Channel name?"); if(!name) return;
-  const channelsRef = ref(db,`servers/${currentServer}/channels`);
-  const channelRef = push(channelsRef);
-  await set(channelRef,{name});
-  addChannelToDOM(channelRef.key,{name});
-}
-
-// ---------- Messaging ----------
-const displayedMessages = new Set();
-function joinChannel(channelId,channelName){
-  currentChannel = channelId;
-  document.getElementById("messages").innerHTML="";
-  displayedMessages.clear();
-  loadMessages();
-}
-
-function loadMessages(){
-  if(!currentServer || !currentChannel) return;
-  const messagesRef = ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`);
-  get(messagesRef).then(snap=>{
-    if(snap.exists()){
-      Object.entries(snap.val()).forEach(([id,msg])=>{
-        addMessageToDOM(id,msg);
-      });
-    }
-  });
-  onChildAdded(messagesRef,(snap)=>{
-    addMessageToDOM(snap.key,snap.val());
-  });
-}
-
-function addMessageToDOM(id,msg){
-  if(displayedMessages.has(id)) return;
-  displayedMessages.add(id);
-  const div = document.createElement("div");
-  div.className = "message";
-
-  const usernameColor = (msg.email === "vegakennitth@gmail.com" || msg.role === "owner") ? "red" : "#00b0f4";
-
-  div.innerHTML = `
-    <img class="avatar" src="${msg.avatar||'https://i.pravatar.cc/32'}">
-    <div>
-      <div class="user" style="color:${usernameColor}">${msg.username||msg.uid}</div>
-      <div class="about">${msg.text||''}</div>
-      ${msg.image ? `<img class="msgImg" src="${msg.image}">` : ''}
-    </div>`;
-  const messagesEl = document.getElementById("messages");
-  messagesEl.appendChild(div);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-async function sendMessage(){
-  if(!currentServer || !currentChannel || !currentUser) return;
-  const text = document.getElementById("msgInput").value;
-  const fileInput = document.getElementById("msgFile");
-  let image = "";
-  
-  if(fileInput.files.length>0){
-    const file = fileInput.files[0];
-    if(file.size>5000000){alert("File too large! Max 500MB, WHY IS THE FILE SO BIG BRO 😭"); return;}
-    const reader = new FileReader();
-    reader.onload=async ev=>{
-      image = ev.target.result;
-      await push(ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`),{
-        uid: currentUser.uid,
-        username: userProfile.username,
-        avatar: userProfile.avatar,
-        text,
-        image,
-        timestamp: Date.now(),
-        email: currentUser.email,
-        role: userProfile.role || ""
-      });
-      document.getElementById("msgInput").value="";
-      fileInput.value="";
-    };
-    reader.readAsDataURL(file);
-  } else {
-    await push(ref(db,`servers/${currentServer}/channels/${currentChannel}/messages`),{
-      uid: currentUser.uid,
-      username: userProfile.username,
-      avatar: userProfile.avatar,
-      text,
-      image:"",
-      timestamp: Date.now(),
-      email: currentUser.email,
-      role: userProfile.role || ""
-    });
-    document.getElementById("msgInput").value="";
-  }
-}
-
-window.register=register; window.login=login; window.logout=logout;
-window.createServer=createServer; window.createChannel=createChannel;
-window.sendMessage=sendMessage; window.editProfile=editProfile; window.changePFP=changePFP;
 </script>
 </body>
 </html>
